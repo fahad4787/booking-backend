@@ -1,4 +1,6 @@
-const { app, ensureDatabaseInitialized } = require('./lib/expressApp');
+const express = require('express');
+const { configureApp, ensureDatabaseInitialized } = require('./lib/expressApp');
+const app = configureApp(express());
 const PORT = process.env.PORT || 3000;
 
 // Initialize database and start server
