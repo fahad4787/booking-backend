@@ -15,23 +15,18 @@ const dbConfig = {
 // Create connection pool
 const pool = mysql.createPool(dbConfig);
 
+let isInitialized = false;
+
 // Initialize database and create tables
 async function initializeDatabase() {
+  if (isInitialized) {
+    return;
+  }
+
   try {
-    // Create database if it doesn't exist
-    const connection = await mysql.createConnection({
-      host: dbConfig.host,
-      user: dbConfig.user,
-      password: dbConfig.password,
-      port: dbConfig.port
-    });
-
-    await connection.execute(`CREATE DATABASE IF NOT EXISTS ${dbConfig.database}`);
-    await connection.end();
-
-    // Create tables
     await createTables();
-    console.log('Database tables created successfully');
+    isInitialized = true;
+    console.log('Database tables verified successfully');
   } catch (error) {
     console.error('Database initialization error:', error);
     throw error;
