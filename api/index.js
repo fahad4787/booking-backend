@@ -1,7 +1,9 @@
 // Vercel Express preset requires express to be imported in the entrypoint.
 // eslint-disable-next-line no-unused-vars
 const express = require('express');
-const { app, ensureDatabaseInitialized } = require('../lib/expressApp');
+const { configureApp, ensureDatabaseInitialized } = require('../lib/expressApp');
+
+const app = configureApp(express());
 
 let isReady = false;
 
