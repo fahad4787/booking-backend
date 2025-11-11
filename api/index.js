@@ -1,4 +1,4 @@
-const { app, ensureDatabaseInitialized } = require('../app');
+const { app, ensureDatabaseInitialized } = require('../lib/expressApp');
 
 let isReady = false;
 
