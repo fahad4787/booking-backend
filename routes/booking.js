@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createCheckout, getProduct, getVariant, isShopifyConfigured } = require('../config/shopify');
+const { createCheckout, isShopifyConfigured } = require('../config/shopify');
 const { pool } = require('../config/database');
 
 // Validation middleware
@@ -17,9 +17,9 @@ const validateBookingData = (req, res, next) => {
 
   // Check required fields
   if (!booking_dates || !first_name || !last_name || !phone_number || !email || !product_id || !variant_id) {
-    return res.status(400).json({
-      success: false,
-      error: 'Missing required fields',
+      return res.status(400).json({
+        success: false,
+        error: 'Missing required fields',
       required_fields: [
         'booking_dates', 
         'first_name', 
@@ -67,34 +67,10 @@ router.post('/create', validateBookingData, async (req, res) => {
     } = req.body;
 
     let checkoutResult = { success: true, checkout_id: null, checkout_url: null };
-    let productResult = { success: true, product: { title: 'Test Product' } };
-    let variantResult = { success: true, variant: { title: 'Test Variant', price: '0.00' } };
 
     // Only use Shopify if configured
     if (isShopifyConfigured()) {
-      // Verify product and variant exist in Shopify
-      [productResult, variantResult] = await Promise.all([
-        getProduct(product_id),
-        getVariant(variant_id)
-      ]);
-
-      if (!productResult.success) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid product ID',
-          details: productResult.error
-        });
-      }
-
-      if (!variantResult.success) {
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid variant ID',
-          details: variantResult.error
-        });
-      }
-
-      // Create Shopify checkout
+      // Create Shopify checkout (no product/variant validation)
       checkoutResult = await createCheckout({
         booking_dates,
         first_name,
@@ -107,14 +83,30 @@ router.post('/create', validateBookingData, async (req, res) => {
       });
 
       if (!checkoutResult.success) {
-        return res.status(500).json({
-          success: false,
-          error: 'Failed to create Shopify checkout',
-          details: checkoutResult.error
-        });
+        // Log error but continue with booking creation
+        console.warn('⚠️  Failed to create Shopify checkout:', checkoutResult.error);
       }
     } else {
       console.log('⚠️  Shopify not configured - creating booking without checkout');
+    }
+
+    // Auto-create product if it doesn't exist
+    try {
+      const productQuery = `
+        INSERT INTO products (product_id, variant_id, product_name, variant_name)
+        VALUES (?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          variant_id = VALUES(variant_id),
+          updated_at = CURRENT_TIMESTAMP
+      `;
+      await pool.execute(productQuery, [
+        product_id,
+        variant_id,
+        `Product ${product_id}`,
+        `Variant ${variant_id}`
+      ]);
+    } catch (error) {
+      console.warn('Could not auto-create product:', error.message);
     }
 
     // Store booking data in database
@@ -144,11 +136,8 @@ router.post('/create', validateBookingData, async (req, res) => {
         booking_id: result.insertId,
         checkout_url: checkoutResult.checkout_url,
         checkout_id: checkoutResult.checkout_id,
-        product_info: {
-          product_title: productResult.product.title,
-          variant_title: variantResult.variant.title,
-          price: variantResult.variant.price
-        }
+        product_id: product_id,
+        variant_id: variant_id
       }
     });
 

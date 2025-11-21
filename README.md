@@ -330,5 +330,3 @@ curl -X POST http://localhost:3000/api/booking/create \
 ## License
 
 MIT License
-# booking-backend
-# booking-backend
