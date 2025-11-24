@@ -4,9 +4,13 @@ const http = require('http');
 
 // Check if Shopify credentials are configured
 const isShopifyConfigured = () => {
-  // Only use environment variables - no hardcoded secrets
-  const storeUrl = process.env.SHOPIFY_STORE_URL;
-  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+  // Static fallback values (use these if env vars are not set)
+  const staticStoreUrl = 'shumailstravel.myshopify.com';
+  const staticAccessToken = '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';
+  
+  // Use environment variables if available, otherwise use static values
+  const storeUrl = process.env.SHOPIFY_STORE_URL || staticStoreUrl;
+  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN || staticAccessToken;
   const apiKey = process.env.SHOPIFY_API_KEY;
   const apiSecret = process.env.SHOPIFY_API_SECRET;
   
@@ -17,18 +21,17 @@ const isShopifyConfigured = () => {
 
 // Get Shopify configuration values
 const getShopifyConfig = () => {
-  // Only use environment variables - no hardcoded secrets
-  const storeUrl = process.env.SHOPIFY_STORE_URL?.replace(/^https?:\/\//, '').replace(/\/$/, '');
-  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN;
+  // Static fallback values
+  const staticStoreUrl = 'shumailstravel.myshopify.com';
+  const staticAccessToken = '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';
   
-  if (!storeUrl || !accessToken) {
-    throw new Error('Shopify credentials not configured. Please set SHOPIFY_STORE_URL and SHOPIFY_ACCESS_TOKEN environment variables.');
-  }
+  const storeUrl = (process.env.SHOPIFY_STORE_URL || staticStoreUrl).replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const accessToken = process.env.SHOPIFY_ACCESS_TOKEN || staticAccessToken;
   
   return {
     storeUrl: storeUrl,
     accessToken: accessToken,
-    apiVersion: process.env.SHOPIFY_API_VERSION || '2024-01' // Using stable API version
+    apiVersion: '2024-01' // Using stable API version
   };
 };
 
