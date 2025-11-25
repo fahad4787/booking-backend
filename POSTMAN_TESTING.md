@@ -66,7 +66,7 @@ This guide will help you test all the APIs locally using Postman.
   "message": "Booking created successfully",
   "data": {
     "booking_id": 1,
-    "checkout_url": "https://shumailstravel.myshopify.com/checkout/...",
+    "checkout_url": "https://shumaila-s-travel.myshopify.com/checkout/...",
     "checkout_id": "checkout_token",
     "product_info": {
       "product_title": "Product Name",
