@@ -116,6 +116,10 @@ router.post('/create', validateBookingData, async (req, res) => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
+    // Ensure checkout_id and checkout_url are null (not undefined) for database
+    const checkoutId = checkoutResult.checkout_id || null;
+    const checkoutUrl = checkoutResult.checkout_url || null;
+
     const [result] = await pool.execute(insertQuery, [
       JSON.stringify(booking_dates),
       first_name,
@@ -125,8 +129,8 @@ router.post('/create', validateBookingData, async (req, res) => {
       product_id,
       variant_id,
       quantity,
-      checkoutResult.checkout_id,
-      checkoutResult.checkout_url
+      checkoutId,
+      checkoutUrl
     ]);
 
     res.status(201).json({

@@ -1,11 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
-const { getAllProducts, isShopifyConfigured } = require('../config/shopify');
+const { getAllProducts, isAdminApiConfigured } = require('../config/shopify');
 
 // GET /api/admin/bookings - Get all bookings
 router.get('/bookings', async (req, res) => {
   try {
+    // Disable caching for this endpoint to ensure fresh data
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
     const query = `
       SELECT 
         id,
@@ -52,11 +59,18 @@ router.get('/bookings', async (req, res) => {
 // GET /api/admin/products - Get all products directly from Shopify
 router.get('/products', async (req, res) => {
   try {
-    // Fetch products directly from Shopify
-    if (!isShopifyConfigured()) {
+    // Disable caching for this endpoint to ensure fresh data
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
+    
+    // Fetch products directly from Shopify (requires Admin API)
+    if (!isAdminApiConfigured()) {
       return res.status(400).json({
         success: false,
-        error: 'Shopify is not configured. Please set SHOPIFY_ACCESS_TOKEN and SHOPIFY_STORE_URL in config.env'
+        error: 'Shopify Admin API is not configured. Please set SHOPIFY_ACCESS_TOKEN and SHOPIFY_STORE_URL in config.env'
       });
     }
 
@@ -72,18 +86,13 @@ router.get('/products', async (req, res) => {
 
     let shopifyProducts = shopifyResult.products || [];
     
-    // Filter to only show active products
-    shopifyProducts = shopifyProducts.filter(product => {
-      // Shopify products have a 'status' field: 'active', 'archived', or 'draft'
-      return product.status === 'active';
-    });
-    
+    // Show all products (active, archived, and draft)
     if (shopifyProducts.length === 0) {
       return res.json({
         success: true,
         data: [],
         count: 0,
-        message: 'No active products found in Shopify store'
+        message: 'No products found in Shopify store'
       });
     }
 
