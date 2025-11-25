@@ -599,7 +599,16 @@
         // Load products
         async function loadProducts() {
             try {
-                const response = await fetch(`${API_BASE}/products`);
+                // Add cache-busting timestamp and disable cache to prevent 304 responses
+                const response = await fetch(`${API_BASE}/products?t=${Date.now()}`, {
+                    method: 'GET',
+                    cache: 'no-store',
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
+                
                 const result = await response.json();
                 
                 if (result.success) {
